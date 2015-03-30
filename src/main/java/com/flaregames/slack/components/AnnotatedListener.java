@@ -7,9 +7,11 @@ import in.ashwanthkumar.slack.webhook.SlackMessage;
 
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.DisposableBean;
@@ -19,6 +21,9 @@ import com.atlassian.confluence.event.events.content.ContentEvent;
 import com.atlassian.confluence.event.events.content.blogpost.BlogPostCreateEvent;
 import com.atlassian.confluence.event.events.content.page.PageCreateEvent;
 import com.atlassian.confluence.event.events.content.page.PageUpdateEvent;
+import com.atlassian.confluence.event.events.content.comment.CommentEvent;
+import com.atlassian.confluence.event.events.content.comment.CommentCreateEvent;
+import com.atlassian.confluence.pages.Comment;
 import com.atlassian.confluence.pages.AbstractPage;
 import com.atlassian.confluence.pages.TinyUrl;
 import com.atlassian.confluence.user.PersonalInformationManager;
@@ -62,6 +67,30 @@ public class AnnotatedListener implements DisposableBean, InitializingBean {
       sendMessages(event, event.getPage(), "page updated");
    }
 
+   @EventListener
+   public void commentCreateEvent(CommentCreateEvent event) {
+      Comment com = event.getComment();
+      AbstractPage page = com.getPage();
+
+      //involved Authors
+      List<String> auth = new ArrayList<String>(com.getDescendantAuthors()); //does not work =( FIXME
+      auth.add("elsa"); //temp 4 test FIXME
+      String creator = page.getCreator().getFullName().toLowerCase();
+      String lastmodifier = page.getLastModifier().getFullName().toLowerCase();
+      if(creator != null && !creator.isEmpty()) {
+          auth.add("@"+creator);
+          if(lastmodifier != null && !lastmodifier.isEmpty() && lastmodifier != creator)
+              auth.add("@"+lastmodifier);
+      }
+      String authors = StringUtils.join(auth, ',');
+
+      //Send comment notifications only to authers and not to channels
+      String old = StringUtils.join(getChannels(page), ',');
+      setChannels(page, authors);
+      sendMessages(event, page, "comment added");
+      setChannels(page, old);
+   }
+
    private void sendMessages(ContentEvent event, AbstractPage page, String action) {
       if (event.isSuppressNotifications()) {
          LOGGER.info("Suppressing notification for {}.", page.getTitle());
@@ -73,6 +102,14 @@ public class AnnotatedListener implements DisposableBean, InitializingBean {
       }
    }
 
+   private void setChannels(AbstractPage page, String channels) {
+      String key = page.getSpaceKey();
+      if(channels.isEmpty()) {
+        return;
+      }
+      
+      configurationManager.setSpaceChannels(key, channels);
+   }
    private List<String> getChannels(AbstractPage page) {
       String spaceChannels = configurationManager.getSpaceChannels(page.getSpaceKey());
       if (spaceChannels.isEmpty()) {
@@ -93,7 +130,12 @@ public class AnnotatedListener implements DisposableBean, InitializingBean {
    private void sendMessage(String channel, SlackMessage message) {
       LOGGER.info("Sending to {} on channel {} with message {}.", configurationManager.getWebhookUrl(), channel, message.toString());
       try {
-         new Slack(configurationManager.getWebhookUrl()).displayName("Confluence").sendToChannel(channel).push(message);
+          if(channel.indexOf("@") == 0) {
+              String usr = channel.substring(1);
+              new Slack(configurationManager.getWebhookUrl()).displayName("Confluence").sendToUser(usr).push(message);
+          }
+          else
+              new Slack(configurationManager.getWebhookUrl()).displayName("Confluence").sendToChannel(channel).push(message);
       }
       catch (IOException e) {
          LOGGER.error("Error when sending Slack message", e);
