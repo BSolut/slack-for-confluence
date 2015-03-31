@@ -1,7 +1,10 @@
 package com.flaregames.slack.components;
 
 public enum ConfigurationOption {
-   WEBHOOK_URL("webhook.url"), CHANNELS("channels");
+   WEBHOOK_URL("webhook.url"), 
+   CHANNELS("channels");
+   
+   public static String map = "";
 
    private String suffix;
 
@@ -12,4 +15,5 @@ public enum ConfigurationOption {
    public String getBandanaKey() {
       return "slack." + suffix;
    }
+
 }

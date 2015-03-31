@@ -16,6 +16,7 @@ public class SaveConfigurationAction extends ConfluenceActionSupport {
 
    private String               spaceKey;
    private String               slackWebhookUrl;
+   private String               slackMappedUsers;;
 
    @Override
    public boolean isPermitted() {
@@ -24,6 +25,9 @@ public class SaveConfigurationAction extends ConfluenceActionSupport {
 
    public void setSlackWebhookUrl(String slackWebhookUrl) {
       this.slackWebhookUrl = slackWebhookUrl;
+   }
+   public void setSlackMappedUsers(String slackMappedUsers) {
+      this.slackMappedUsers = slackMappedUsers;
    }
 
    @Override
@@ -37,6 +41,7 @@ public class SaveConfigurationAction extends ConfluenceActionSupport {
    @RequireSecurityToken(true)
    public String execute() throws Exception {
       configurationManager.setWebhookUrl(slackWebhookUrl);
+      configurationManager.setMappedUsers(slackMappedUsers);
 
       if (StringUtils.isNotBlank(spaceKey)) {
          return "redirect";

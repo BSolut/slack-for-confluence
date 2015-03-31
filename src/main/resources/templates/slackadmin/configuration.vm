@@ -38,9 +38,14 @@
         <input id="slackWebhookUrl" class="text" name="slackWebhookUrl" value="$!action.slackWebhookUrl"/>
     </div>
 
+    <div class="field-group">
+        <p style="margin-left: -8em; color: #707070;" >User Mapping for Comment Notification (confluence Username,slack Username<newline>)</p>
+        <textarea id="slackMappedUsers" style="min-height: 10ex; width: 26em; max-width: 26em; margin-left: -8em;" placeholder="ConfluenceUsername,SlackUsername ConfluenceUsername,SlackUsername" class="text" name="slackMappedUsers" value="$!action.slackMappedUsers">$!action.slackMappedUsers</textarea>
+    </div>
+
     <div class="buttons-container">
         <div class="buttons">
-            <input class="button submit" type="submit" value="Save"/>
+            <input style="margin-left: -8em;"  class="button submit" type="submit" value="Save"/>
         </div>
     </div>
 </form>

@@ -12,6 +12,7 @@ public class ConfigurationManager {
       this.bandanaManager = bandanaManager;
    }
 
+   //Webhook
    public String getWebhookUrl() {
       return getGlobalValue(ConfigurationOption.WEBHOOK_URL);
    }
@@ -28,6 +29,15 @@ public class ConfigurationManager {
       bandanaManager.setValue(GLOBAL_CONTEXT, option.getBandanaKey(), webhookUrl);
    }
 
+   //Mapped Users
+   public String getMappedUsers() {
+      return ConfigurationOption.map;
+   }
+   public void setMappedUsers(String mappedUsers) {
+      ConfigurationOption.map = mappedUsers;
+   }
+   
+   //Channels
    public void setSpaceChannels(String spaceKey, String channels) {
       bandanaManager.setValue(new ConfluenceBandanaContext(spaceKey), ConfigurationOption.CHANNELS.getBandanaKey(), channels);
    }

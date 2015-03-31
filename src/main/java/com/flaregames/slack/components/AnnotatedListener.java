@@ -73,20 +73,27 @@ public class AnnotatedListener implements DisposableBean, InitializingBean {
       AbstractPage page = com.getPage();
 
       //involved Authors
-      List<String> auth = new ArrayList<String>(com.getDescendantAuthors()); //does not work =( FIXME
-      auth.add("elsa"); //temp 4 test FIXME
-      String creator = page.getCreator().getFullName().toLowerCase();
-      String lastmodifier = page.getLastModifier().getFullName().toLowerCase();
-      if(creator != null && !creator.isEmpty()) {
-          auth.add("@"+creator);
-          if(lastmodifier != null && !lastmodifier.isEmpty() && lastmodifier != creator)
-              auth.add("@"+lastmodifier);
+      List<String> auth = new ArrayList<String>();
+
+      String creator = page.getCreator().getName().toLowerCase();
+      String lastmodifier = page.getLastModifier().getName().toLowerCase();
+      String maps = configurationManager.getMappedUsers();
+
+      if(StringUtils.isNotBlank(maps) && (StringUtils.isNotBlank(creator) || StringUtils.isNotBlank(lastmodifier)) )
+      {
+          String[] mapLines = maps.split(System.getProperty("line.separator"));
+          for (String couple : mapLines) {   //Test for MapList Match
+              String[] cpl = couple.replaceAll("\\s","").split(",");
+              if( creator.equals(cpl[0]) || lastmodifier.equals(cpl[0]) )
+                  auth.add("@"+cpl[1]);
+          }
       }
       String authors = StringUtils.join(auth, ',');
 
       //Send comment notifications only to authers and not to channels
       String old = StringUtils.join(getChannels(page), ',');
       setChannels(page, authors);
+
       sendMessages(event, page, "comment added");
       setChannels(page, old);
    }
