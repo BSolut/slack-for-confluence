@@ -6,6 +6,7 @@ import com.atlassian.confluence.setup.bandana.ConfluenceBandanaContext;
 
 public class ConfigurationManager {
    private static final ConfluenceBandanaContext GLOBAL_CONTEXT = ConfluenceBandanaContext.GLOBAL_CONTEXT;
+   private static final ConfluenceBandanaContext MAP_CONTEXT = ConfluenceBandanaContext.GLOBAL_CONTEXT;
    private BandanaManager                        bandanaManager;
 
    public ConfigurationManager(BandanaManager bandanaManager) {
@@ -17,12 +18,12 @@ public class ConfigurationManager {
       return getGlobalValue(ConfigurationOption.WEBHOOK_URL);
    }
 
-   public void setWebhookUrl(String webhookUrl) {
-      setGlobalValue(ConfigurationOption.WEBHOOK_URL, webhookUrl);
-   }
-
    private String getGlobalValue(ConfigurationOption option) {
       return getBandanaValue(GLOBAL_CONTEXT, option);
+   }
+
+   public void setWebhookUrl(String webhookUrl) {
+      setGlobalValue(ConfigurationOption.WEBHOOK_URL, webhookUrl);
    }
 
    private void setGlobalValue(ConfigurationOption option, String webhookUrl) {
@@ -31,10 +32,17 @@ public class ConfigurationManager {
 
    //Mapped Users
    public String getMappedUsers() {
-      return ConfigurationOption.map;
+      return getGlobalMappedValue(ConfigurationOption.MAPPED);
    }
+   private String getGlobalMappedValue(ConfigurationOption option) {
+      return getBandanaValue(MAP_CONTEXT, option);
+   }
+
    public void setMappedUsers(String mappedUsers) {
-      ConfigurationOption.map = mappedUsers;
+      setGlobalMapped(ConfigurationOption.MAPPED, mappedUsers);
+   }
+   private void setGlobalMapped(ConfigurationOption option, String mappedUsers) {
+      bandanaManager.setValue(MAP_CONTEXT, option.getBandanaKey(), mappedUsers);
    }
    
    //Channels

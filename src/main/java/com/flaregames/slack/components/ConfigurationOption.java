@@ -2,9 +2,8 @@ package com.flaregames.slack.components;
 
 public enum ConfigurationOption {
    WEBHOOK_URL("webhook.url"), 
-   CHANNELS("channels");
-   
-   public static String map = "";
+   CHANNELS("channels"),
+   MAPPED("users");
 
    private String suffix;
 
