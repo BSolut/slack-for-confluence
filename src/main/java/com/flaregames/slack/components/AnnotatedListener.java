@@ -4,6 +4,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Strings.isNullOrEmpty;
 import in.ashwanthkumar.slack.webhook.Slack;
 import in.ashwanthkumar.slack.webhook.SlackMessage;
+import in.ashwanthkumar.slack.webhook.SlackAttachment;
 
 import java.io.IOException;
 import java.util.Arrays;
@@ -94,20 +95,26 @@ public class AnnotatedListener implements DisposableBean, InitializingBean {
       String old = StringUtils.join(getChannels(page), ',');
       setChannels(page, authors);
 
-      String text = "comment added"+com.getBodyAsStringWithoutMarkup();
-      sendMessages(event, page, text);
+      String content = com.getBodyAsStringWithoutMarkup();
+      String text = "comment added";
+      sendMessages(event, page, text, content);
       setChannels(page, old);
    }
 
-   private void sendMessages(ContentEvent event, AbstractPage page, String action) {
+   private void sendMessages(ContentEvent event, AbstractPage page, String action, String... attachment) {
       if (event.isSuppressNotifications()) {
          LOGGER.info("Suppressing notification for {}.", page.getTitle());
          return;
       }
-      SlackMessage message = getMessage(page, action);
-      for (String channel : getChannels(page)) {
-         sendMessage(channel, message);
+
+      Object message = null;
+      if(attachment.length > 0) { message = getAttachment(page, action, attachment[0]); }
+      else { message = getMessage(page, action); }
+
+      for (String channel : getChannels(page)) { 
+        sendMessage(channel, message); 
       }
+
    }
 
    private void setChannels(AbstractPage page, String channels) {
@@ -126,24 +133,54 @@ public class AnnotatedListener implements DisposableBean, InitializingBean {
       return Arrays.asList(spaceChannels.split(","));
    }
 
+   private SlackAttachment getAttachment(AbstractPage page, String action, String attachment) {
+      String username = isNullOrEmpty(page.getLastModifierName()) ? page.getCreatorName() : page.getLastModifierName();
+      final User user = userAccessor.getUser(username);
+      
+      SlackAttachment message = new SlackAttachment(attachment);
+      message = message.color("#205081");
+
+      message = message.title(page.getSpace().getDisplayTitle() + " - " + page.getTitle(), tinyLink(page));
+      message = (null == user) ? message.preText(action) : message.preText((action+" by "+user.getFullName()));
+
+      return message.fallback(page.getSpace().getDisplayTitle() + " - " + page.getTitle()+" - " + action);
+   }
+
    private SlackMessage getMessage(AbstractPage page, String action) {
       String username = isNullOrEmpty(page.getLastModifierName()) ? page.getCreatorName() : page.getLastModifierName();
       final User user = userAccessor.getUser(username);
+      
       SlackMessage message = new SlackMessage();
       message = appendPageLink(message, page);
       message = message.text(" - " + action + " by ");
+
       return appendPersonalSpaceUrl(message, user);
    }
 
-   private void sendMessage(String channel, SlackMessage message) {
+   private void sendMessage(String channel, Object message) {
       LOGGER.info("Sending to {} on channel {} with message {}.", configurationManager.getWebhookUrl(), channel, message.toString());
       try {
           if(channel.indexOf("@") == 0) {
               String usr = channel.substring(1);
-              new Slack(configurationManager.getWebhookUrl()).displayName("Confluence").sendToUser(usr).push(message);
+              if(message instanceof SlackMessage) {
+                  SlackMessage msg = (SlackMessage)message;
+                  new Slack(configurationManager.getWebhookUrl()).displayName("Confluence").sendToUser(usr).push(msg);
+              }
+              else {
+                  SlackAttachment msg = (SlackAttachment)message;
+                  new Slack(configurationManager.getWebhookUrl()).displayName("Confluence").sendToUser(usr).push(msg);
+              }
           }
-          else
-              new Slack(configurationManager.getWebhookUrl()).displayName("Confluence").sendToChannel(channel).push(message);
+          else {
+              if(message instanceof SlackMessage) {
+                  SlackMessage msg = (SlackMessage)message;
+                  new Slack(configurationManager.getWebhookUrl()).displayName("Confluence").sendToChannel(channel).push(msg);
+              }
+              else {
+                  SlackAttachment msg = (SlackAttachment)message;
+                  new Slack(configurationManager.getWebhookUrl()).displayName("Confluence").sendToChannel(channel).push(msg);
+              }
+          }
       }
       catch (IOException e) {
          LOGGER.error("Error when sending Slack message", e);
@@ -154,8 +191,7 @@ public class AnnotatedListener implements DisposableBean, InitializingBean {
       if (null == user) {
          return message.text("unknown user");
       }
-      return message.link(webResourceUrlProvider.getBaseUrl(UrlMode.ABSOLUTE) + "/" + personalInformationManager.getOrCreatePersonalInformation(user).getUrlPath(),
-            user.getFullName());
+      return message.link(webResourceUrlProvider.getBaseUrl(UrlMode.ABSOLUTE) + "/" + personalInformationManager.getOrCreatePersonalInformation(user).getUrlPath(), user.getFullName());
    }
 
    private SlackMessage appendPageLink(SlackMessage message, AbstractPage page) {
