@@ -94,7 +94,8 @@ public class AnnotatedListener implements DisposableBean, InitializingBean {
       String old = StringUtils.join(getChannels(page), ',');
       setChannels(page, authors);
 
-      sendMessages(event, page, "comment added");
+      String text = "comment added"+com.getBodyAsStringWithoutMarkup();
+      sendMessages(event, page, text);
       setChannels(page, old);
    }
 
