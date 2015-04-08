@@ -95,21 +95,33 @@ public class AnnotatedListener implements DisposableBean, InitializingBean {
       String old = StringUtils.join(getChannels(page), ',');
       setChannels(page, authors);
 
+      //Set contents
       String content = com.getBodyAsStringWithoutMarkup();
+      String comPath = webResourceUrlProvider.getBaseUrl(UrlMode.ABSOLUTE) + "/" + page.getUrlPath() + "#comment-thread-"+com.getIdAsString();
+
       String text = "comment added";
-      sendMessages(event, page, text, content);
+
+
+      sendMessages(event, page, text, content, comPath);
       setChannels(page, old);
    }
 
-   private void sendMessages(ContentEvent event, AbstractPage page, String action, String... attachment) {
+   private void sendMessages(ContentEvent event, AbstractPage page, String action, String... commentContents) {
       if (event.isSuppressNotifications()) {
          LOGGER.info("Suppressing notification for {}.", page.getTitle());
          return;
       }
 
       Object message = null;
-      if(attachment.length > 0) { message = getAttachment(page, action, attachment[0]); }
-      else { message = getMessage(page, action); }
+      if(commentContents.length > 0) { 
+          if(commentContents[0].length() < 505) { //to short to turn into attachment
+              message = getMessage(page, action, commentContents[0], commentContents[1]); 
+          }
+          else {
+              message = getAttachment(page, action, commentContents[0], commentContents[1]); }
+      }
+      else { 
+        message = getMessage(page, action); }
 
       for (String channel : getChannels(page)) { 
         sendMessage(channel, message); 
@@ -133,7 +145,7 @@ public class AnnotatedListener implements DisposableBean, InitializingBean {
       return Arrays.asList(spaceChannels.split(","));
    }
 
-   private SlackAttachment getAttachment(AbstractPage page, String action, String attachment) {
+   private SlackAttachment getAttachment(AbstractPage page, String action, String attachment, String comPath) {
       String username = isNullOrEmpty(page.getLastModifierName()) ? page.getCreatorName() : page.getLastModifierName();
       final User user = userAccessor.getUser(username);
       
@@ -143,16 +155,22 @@ public class AnnotatedListener implements DisposableBean, InitializingBean {
       message = message.title(page.getSpace().getDisplayTitle() + " - " + page.getTitle(), tinyLink(page));
       message = (null == user) ? message.preText(action) : message.preText((action+" by "+user.getFullName()));
 
+      message = message.author("#comment", comPath);
+
       return message.fallback(page.getSpace().getDisplayTitle() + " - " + page.getTitle()+" - " + action);
    }
 
-   private SlackMessage getMessage(AbstractPage page, String action) {
+   private SlackMessage getMessage(AbstractPage page, String action, String... commentContents) {
       String username = isNullOrEmpty(page.getLastModifierName()) ? page.getCreatorName() : page.getLastModifierName();
       final User user = userAccessor.getUser(username);
       
       SlackMessage message = new SlackMessage();
+
       message = appendPageLink(message, page);
-      message = message.text(" - " + action + " by ");
+      if(commentContents.length > 0) {
+        message = message.text(" - <" + commentContents[1] + "|#comment> added"+ commentContents[0] +" by "); }
+      else {
+          message = message.text(" - " + action + " by "); }
 
       return appendPersonalSpaceUrl(message, user);
    }
