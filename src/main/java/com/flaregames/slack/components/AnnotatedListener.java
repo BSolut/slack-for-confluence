@@ -78,6 +78,7 @@ public class AnnotatedListener implements DisposableBean, InitializingBean {
 
       String creator = page.getCreator().getName().toLowerCase();
       String lastmodifier = page.getLastModifier().getName().toLowerCase();
+      String commentator = com.getCreator().getName().toLowerCase();
       String maps = configurationManager.getMappedUsers();
 
       if(StringUtils.isNotBlank(maps) && (StringUtils.isNotBlank(creator) || StringUtils.isNotBlank(lastmodifier)) )
@@ -85,22 +86,23 @@ public class AnnotatedListener implements DisposableBean, InitializingBean {
           String[] mapLines = maps.split(System.getProperty("line.separator"));
           for (String couple : mapLines) {   //Test for MapList Match
               String[] cpl = couple.replaceAll("\\s","").split(",");
-              if( creator.equals(cpl[0]) || lastmodifier.equals(cpl[0]) )
+              Boolean listMatch = ( creator.equals(cpl[0]) || lastmodifier.equals(cpl[0]) ) ? true : false;
+              Boolean isCommentator =  ( creator.equals(commentator) || lastmodifier.equals(commentator) ) ? true : false;
+              if( listMatch && !isCommentator) {
                   auth.add("@"+cpl[1]);
+              }
           }
       }
-      String authors = StringUtils.join(auth, ',');
-
       //Send comment notifications only to authers and not to channels
+      String authors = StringUtils.join(auth, ',');
       String old = StringUtils.join(getChannels(page), ',');
-      setChannels(page, authors);
+      setChannels(page, authors, true);
 
       //Set contents
       String content = com.getBodyAsStringWithoutMarkup();
       String comPath = webResourceUrlProvider.getBaseUrl(UrlMode.ABSOLUTE) + "/" + page.getUrlPath() + "#comment-thread-"+com.getIdAsString();
 
-      String text = "comment added";
-
+      String text = "comment added\n commentator:"+commentator+"\n authors:"+authors;
 
       sendMessages(event, page, text, content, comPath);
       setChannels(page, old);
@@ -129,12 +131,11 @@ public class AnnotatedListener implements DisposableBean, InitializingBean {
 
    }
 
-   private void setChannels(AbstractPage page, String channels) {
+   private void setChannels(AbstractPage page, String channels, Boolean... forceSet) {
       String key = page.getSpaceKey();
-      if(channels.isEmpty()) {
+      if(channels.isEmpty() && (forceSet.length <= 0 || forceSet[0] == false)) {
         return;
       }
-      
       configurationManager.setSpaceChannels(key, channels);
    }
    private List<String> getChannels(AbstractPage page) {
