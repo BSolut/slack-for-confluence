@@ -71,29 +71,41 @@ public class AnnotatedListener implements DisposableBean, InitializingBean {
 
    @EventListener
    public void commentCreateEvent(CommentCreateEvent event) {
+      String maps = configurationManager.getMappedUsers();
+      if(StringUtils.isNotBlank(maps)) {
+          return; }
+
       Comment com = event.getComment();
       AbstractPage page = com.getPage();
-
-      //involved Authors
       List<String> auth = new ArrayList<String>();
 
       String creator = page.getCreator().getName().toLowerCase();
       String lastmodifier = page.getLastModifier().getName().toLowerCase();
       String commentator = com.getCreator().getName().toLowerCase();
-      String maps = configurationManager.getMappedUsers();
 
-      if(StringUtils.isNotBlank(maps) && (StringUtils.isNotBlank(creator) || StringUtils.isNotBlank(lastmodifier)) )
-      {
-          String[] mapLines = maps.split(System.getProperty("line.separator"));
-          for (String couple : mapLines) {   //Test for MapList Match
-              String[] cpl = couple.replaceAll("\\s","").split(",");
+      //check if current comment is answer to previus comment(s) and all involved authors
+      Comment firstcom = com.getParent();
+      while((firstcom != null)  && (firstcom.getParent() != null)) { //get first in line
+          firstcom = firstcom.getParent(); }
+      List<String> descendants = (firstcom != null) ? new ArrayList<String>(firstcom.getDescendantAuthors()) : new ArrayList<String>();
+
+      //Check if match with Slack User
+      String[] mapLines = maps.split(System.getProperty("line.separator"));
+      for (String couple : mapLines) {   //Test for MapList Match
+          String[] cpl = couple.replaceAll("\\s","").split(",");
+
+          if(!descendants.isEmpty()) { //Answer
+              if(descendants.contains(cpl[0])) {
+                  auth.add("@"+cpl[1]); }
+          }
+          else { //single comment
               Boolean listMatch = ( creator.equals(cpl[0]) || lastmodifier.equals(cpl[0]) ) ? true : false;
-              Boolean isCommentator =  ( creator.equals(commentator) || lastmodifier.equals(commentator) ) ? true : false;
-              if( listMatch && !isCommentator) {
-                  auth.add("@"+cpl[1]);
-              }
+              Boolean isCommentator =  (creator.equals(commentator) || lastmodifier.equals(commentator)) ? true : false;
+              if(listMatch && !isCommentator) {
+                  auth.add("@"+cpl[1]); }
           }
       }
+
       //Send comment notifications only to authers and not to channels
       String authors = StringUtils.join(auth, ',');
       String old = StringUtils.join(getChannels(page), ',');
@@ -102,8 +114,7 @@ public class AnnotatedListener implements DisposableBean, InitializingBean {
       //Set contents
       String content = com.getBodyAsStringWithoutMarkup();
       String comPath = webResourceUrlProvider.getBaseUrl(UrlMode.ABSOLUTE) + "/" + page.getUrlPath() + "#comment-thread-"+com.getIdAsString();
-
-      text = "comment added";
+      String text = "comment added";
 
       sendMessages(event, page, text, content, comPath, commentator);
       setChannels(page, old);
