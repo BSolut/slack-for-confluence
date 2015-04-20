@@ -11,6 +11,7 @@ import java.util.Arrays;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
@@ -102,9 +103,9 @@ public class AnnotatedListener implements DisposableBean, InitializingBean {
       String content = com.getBodyAsStringWithoutMarkup();
       String comPath = webResourceUrlProvider.getBaseUrl(UrlMode.ABSOLUTE) + "/" + page.getUrlPath() + "#comment-thread-"+com.getIdAsString();
 
-      String text = "comment added\n commentator:"+commentator+"\n authors:"+authors;
+      text = "comment added";
 
-      sendMessages(event, page, text, content, comPath);
+      sendMessages(event, page, text, content, comPath, commentator);
       setChannels(page, old);
    }
 
@@ -117,10 +118,10 @@ public class AnnotatedListener implements DisposableBean, InitializingBean {
       Object message = null;
       if(commentContents.length > 0) { 
           if(commentContents[0].length() < 505) { //to short to turn into attachment
-              message = getMessage(page, action, commentContents[0], commentContents[1]); 
+              message = getMessage(page, action, commentContents[0], commentContents[1], commentContents[2]); 
           }
           else {
-              message = getAttachment(page, action, commentContents[0], commentContents[1]); }
+              message = getAttachment(page, action, commentContents[0], commentContents[1], commentContents[2]); }
       }
       else { 
         message = getMessage(page, action); }
@@ -146,9 +147,9 @@ public class AnnotatedListener implements DisposableBean, InitializingBean {
       return Arrays.asList(spaceChannels.split(","));
    }
 
-   private SlackAttachment getAttachment(AbstractPage page, String action, String attachment, String comPath) {
-      String username = isNullOrEmpty(page.getLastModifierName()) ? page.getCreatorName() : page.getLastModifierName();
-      final User user = userAccessor.getUser(username);
+   private SlackAttachment getAttachment(AbstractPage page, String action, String attachment, String comPath, String commentator) { //attachments are always comments
+      String commentatorname = (commentator.length() >= 1) ? (commentator.substring(0, 1).toUpperCase() + commentator.substring(1)) : commentator;
+      User user = userAccessor.getUser(commentatorname);
       
       SlackAttachment message = new SlackAttachment(attachment);
       message = message.color("#205081");
@@ -163,16 +164,17 @@ public class AnnotatedListener implements DisposableBean, InitializingBean {
 
    private SlackMessage getMessage(AbstractPage page, String action, String... commentContents) {
       String username = isNullOrEmpty(page.getLastModifierName()) ? page.getCreatorName() : page.getLastModifierName();
-      final User user = userAccessor.getUser(username);
-      
       SlackMessage message = new SlackMessage();
 
       message = appendPageLink(message, page);
-      if(commentContents.length > 0) {
-        message = message.text(" - <" + commentContents[1] + "|#comment> added"+ commentContents[0] +" by "); }
+      if(commentContents.length > 0) { //check if comment
+        message = message.text(" - <" + commentContents[1] + "|#comment> added"+ commentContents[0] +" by "); 
+        username = (commentContents[2].length() >= 1) ? (commentContents[2].substring(0, 1).toUpperCase() + commentContents[2].substring(1)) : commentContents[2];
+      }
       else {
           message = message.text(" - " + action + " by "); }
 
+      User user = userAccessor.getUser(username);
       return appendPersonalSpaceUrl(message, user);
    }
 
