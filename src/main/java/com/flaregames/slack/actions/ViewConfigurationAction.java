@@ -34,6 +34,9 @@ public class ViewConfigurationAction extends ConfluenceActionSupport {
    public String getSlackMappedUsers() {
       return configurationManager.getMappedUsers();
    }
+   public String getSlackMaxChars() {
+      return configurationManager.getMaxChars();
+   }
 
    @Override
    public String execute() throws Exception {

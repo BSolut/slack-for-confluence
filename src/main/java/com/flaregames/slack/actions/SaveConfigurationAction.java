@@ -17,6 +17,7 @@ public class SaveConfigurationAction extends ConfluenceActionSupport {
    private String               spaceKey;
    private String               slackWebhookUrl;
    private String               slackMappedUsers;;
+   private String               slackMaxChars;
 
    @Override
    public boolean isPermitted() {
@@ -28,6 +29,9 @@ public class SaveConfigurationAction extends ConfluenceActionSupport {
    }
    public void setSlackMappedUsers(String slackMappedUsers) {
       this.slackMappedUsers = slackMappedUsers;
+   }
+   public void setSlackMaxChars(String slackMaxChars) {
+      this.slackMaxChars = slackMaxChars;
    }
 
    @Override
@@ -42,6 +46,7 @@ public class SaveConfigurationAction extends ConfluenceActionSupport {
    public String execute() throws Exception {
       configurationManager.setWebhookUrl(slackWebhookUrl);
       configurationManager.setMappedUsers(slackMappedUsers);
+      configurationManager.setMaxChars(slackMaxChars);
 
       if (StringUtils.isNotBlank(spaceKey)) {
          return "redirect";

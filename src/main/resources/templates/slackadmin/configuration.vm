@@ -43,6 +43,11 @@
         <textarea  value="$!action.slackMappedUsers" id="slackMappedUsers" style="min-height: 10ex; width: 26em; max-width: 26em; margin-left: -8em;" placeholder="ConfluenceUsername,SlackUsername ConfluenceUsername,SlackUsername" class="text" name="slackMappedUsers">$!action.slackMappedUsers</textarea>
     </div>
 
+    <div class="field-group">
+        <p style="margin-left: -8em; color: #707070;" >Amount of Chars when comment notifications are split into an attachment</p>
+        <input type="number" style="width: 5em; margin-left: -8em;"  value="$!action.slackMaxChars" id="slackMaxChars" class="text" name="slackMaxChars"/>
+    </div>
+
     <div class="buttons-container">
         <div class="buttons">
             <input style="margin-left: -8em;"  class="button submit" type="submit" value="Save"/>

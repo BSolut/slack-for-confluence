@@ -34,12 +34,18 @@ public class ConfigurationManager {
    public String getMappedUsers() {
       return getGlobalMappedValue(ConfigurationOption.MAPPED);
    }
+   public String getMaxChars() {
+      return getGlobalMappedValue(ConfigurationOption.MAXCHARS);
+   }
    private String getGlobalMappedValue(ConfigurationOption option) {
       return getBandanaValue(MAP_CONTEXT, option);
    }
 
    public void setMappedUsers(String mappedUsers) {
       setGlobalMapped(ConfigurationOption.MAPPED, mappedUsers);
+   }
+   public void setMaxChars(String maxChars) {
+      setGlobalMapped(ConfigurationOption.MAXCHARS, maxChars);
    }
    private void setGlobalMapped(ConfigurationOption option, String mappedUsers) {
       bandanaManager.setValue(MAP_CONTEXT, option.getBandanaKey(), mappedUsers);

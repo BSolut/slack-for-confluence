@@ -72,7 +72,7 @@ public class AnnotatedListener implements DisposableBean, InitializingBean {
    @EventListener
    public void commentCreateEvent(CommentCreateEvent event) {
       String maps = configurationManager.getMappedUsers();
-      if(StringUtils.isNotBlank(maps)) {
+      if(StringUtils.isBlank(maps)) {
           return; }
 
       Comment com = event.getComment();
@@ -84,32 +84,34 @@ public class AnnotatedListener implements DisposableBean, InitializingBean {
       String commentator = com.getCreator().getName().toLowerCase();
 
       //check if current comment is answer to previus comment(s) and all involved authors
-      Comment firstcom = com.getParent();
-      while((firstcom != null)  && (firstcom.getParent() != null)) { //get first in line
+      Comment firstcom = com;
+      while(firstcom.getParent() != null) { //get first in line
           firstcom = firstcom.getParent(); }
-      List<String> descendants = (firstcom != null) ? new ArrayList<String>(firstcom.getDescendantAuthors()) : new ArrayList<String>();
+      List<String> descendants = new ArrayList<String>(firstcom.getDescendantAuthors());
 
       //Check if match with Slack User
       String[] mapLines = maps.split(System.getProperty("line.separator"));
       for (String couple : mapLines) {   //Test for MapList Match
           String[] cpl = couple.replaceAll("\\s","").split(",");
+          if(commentator.equals(cpl[0])) { //no notifications to commentator himself
+            continue; }
 
           if(!descendants.isEmpty()) { //Answer
               if(descendants.contains(cpl[0])) {
                   auth.add("@"+cpl[1]); }
           }
           else { //single comment
-              Boolean listMatch = ( creator.equals(cpl[0]) || lastmodifier.equals(cpl[0]) ) ? true : false;
-              Boolean isCommentator =  (creator.equals(commentator) || lastmodifier.equals(commentator)) ? true : false;
-              if(listMatch && !isCommentator) {
+              if(creator.equals(cpl[0]) || lastmodifier.equals(cpl[0])) {
                   auth.add("@"+cpl[1]); }
           }
       }
+      if(auth.isEmpty()) {
+          return; }
 
       //Send comment notifications only to authers and not to channels
       String authors = StringUtils.join(auth, ',');
       String old = StringUtils.join(getChannels(page), ',');
-      setChannels(page, authors, true);
+      setChannels(page, authors);
 
       //Set contents
       String content = com.getBodyAsStringWithoutMarkup();
@@ -128,7 +130,8 @@ public class AnnotatedListener implements DisposableBean, InitializingBean {
 
       Object message = null;
       if(commentContents.length > 0) { 
-          if(commentContents[0].length() < 505) { //to short to turn into attachment
+          Integer chars = Integer.parseInt(configurationManager.getMaxChars()); 
+          if(commentContents[0].length() < chars) { //to short to turn into attachment
               message = getMessage(page, action, commentContents[0], commentContents[1], commentContents[2]); 
           }
           else {
@@ -143,11 +146,10 @@ public class AnnotatedListener implements DisposableBean, InitializingBean {
 
    }
 
-   private void setChannels(AbstractPage page, String channels, Boolean... forceSet) {
+   private void setChannels(AbstractPage page, String channels) {
       String key = page.getSpaceKey();
-      if(channels.isEmpty() && (forceSet.length <= 0 || forceSet[0] == false)) {
-        return;
-      }
+      if(channels.isEmpty()) {
+        return; }
       configurationManager.setSpaceChannels(key, channels);
    }
    private List<String> getChannels(AbstractPage page) {
@@ -166,9 +168,14 @@ public class AnnotatedListener implements DisposableBean, InitializingBean {
       message = message.color("#205081");
 
       message = message.title(page.getSpace().getDisplayTitle() + " - " + page.getTitle(), tinyLink(page));
-      message = (null == user) ? message.preText(action) : message.preText((action+" by "+user.getFullName()));
+      message = (null == user) ? message.preText(action) : message.preText(action);
 
-      message = message.author("#comment", comPath);
+      String comFormatPath = "<"+comPath+"|#comment>";
+      SlackAttachment.Field comLink = new SlackAttachment.Field("Direct Link", comFormatPath, true);
+      message = message.addField(comLink);
+
+      String authorPath = webResourceUrlProvider.getBaseUrl(UrlMode.ABSOLUTE) + "/" + personalInformationManager.getOrCreatePersonalInformation(user).getUrlPath();
+      message = message.author("Author: "+user.getFullName(), authorPath);
 
       return message.fallback(page.getSpace().getDisplayTitle() + " - " + page.getTitle()+" - " + action);
    }
