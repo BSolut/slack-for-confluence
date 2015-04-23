@@ -3,6 +3,7 @@ package com.flaregames.slack.components;
 public enum ConfigurationOption {
    WEBHOOK_URL("webhook.url"), 
    CHANNELS("channels"),
+   COMSENABLED("checked"),
    MAPPED("users"),
    MAXCHARS("150");
 

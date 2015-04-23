@@ -55,6 +55,15 @@
     <div class="field-group">
         <label for="channels">Channels (without #, comma-separated)</label>
         <input id="channels" class="text long-field" type="text" name="channels" value="$!action.channels"/>
+    </diV>
+
+    <div class="field-group">
+        #if( $!action.commessages=="checked")
+            #set ($mess = 'checked="checked"')
+        #else
+            #set ($mess = '')
+        #end
+        <input type="checkbox" id="commessages" name="commessages" $mess value="$!action.commessages">Enable Comment Notifications<br>
     </div>
 
     <div class="buttons-container">

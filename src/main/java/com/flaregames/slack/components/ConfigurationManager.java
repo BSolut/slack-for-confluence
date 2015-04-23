@@ -55,9 +55,15 @@ public class ConfigurationManager {
    public void setSpaceChannels(String spaceKey, String channels) {
       bandanaManager.setValue(new ConfluenceBandanaContext(spaceKey), ConfigurationOption.CHANNELS.getBandanaKey(), channels);
    }
-
    public String getSpaceChannels(String spaceKey) {
       return getBandanaValue(new ConfluenceBandanaContext(spaceKey), ConfigurationOption.CHANNELS);
+   }
+   //Comment Notification Enabled
+   public void setSpaceComsEnabled(String spaceKey, String commessages) {
+      bandanaManager.setValue(new ConfluenceBandanaContext(spaceKey), ConfigurationOption.COMSENABLED.getBandanaKey(), commessages);
+   }
+   public String getSpaceComsEnabled(String spaceKey) {
+      return getBandanaValue(new ConfluenceBandanaContext(spaceKey), ConfigurationOption.COMSENABLED);
    }
 
    private String getBandanaValue(BandanaContext bandanaContext, ConfigurationOption configurationOption) {
