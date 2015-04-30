@@ -19,7 +19,7 @@ public class SaveSpaceConfigurationAction extends ConfluenceActionSupport {
 
    private String               key;
    private String               channels;
-   private String               commessages;
+   private String               commentsenabled;
 
    @Override
    public void validate() {
@@ -39,7 +39,7 @@ public class SaveSpaceConfigurationAction extends ConfluenceActionSupport {
    @RequireSecurityToken(true)
    public String execute() throws Exception {
       configurationManager.setSpaceChannels(key, channels);
-      configurationManager.setSpaceComsEnabled(key, commessages);
+      configurationManager.setSpaceCommentsenabled(key, commentsenabled);
       return Action.SUCCESS;
    }
 
@@ -58,11 +58,11 @@ public class SaveSpaceConfigurationAction extends ConfluenceActionSupport {
       this.channels = channels;
    }
 
-   public String getComsEnabled() {
-      return commessages;
+   public String getCommentsenabled() {
+      return commentsenabled;
    }
-   public void setComsEnabled(String commessages) {
-      this.commessages = commessages;
+   public void setCommentsenabled(String commentsenabled) {
+      this.commentsenabled = commentsenabled;
    }
 
    public void setConfigurationManager(ConfigurationManager configurationManager) {

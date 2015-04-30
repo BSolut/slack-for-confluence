@@ -72,12 +72,12 @@ public class AnnotatedListener implements DisposableBean, InitializingBean {
    @EventListener
    public void commentCreateEvent(CommentCreateEvent event) {
       String maps = configurationManager.getMappedUsers();
-      if(StringUtils.isBlank(maps)) {
-          return; }
-
       Comment com = event.getComment();
       AbstractPage page = com.getPage();
       List<String> auth = new ArrayList<String>();
+
+      if(StringUtils.isBlank(maps) || !getCommentsenabled(page)) {
+          return; }
 
       String creator = page.getCreator().getName().toLowerCase();
       String lastmodifier = page.getLastModifier().getName().toLowerCase();
@@ -158,6 +158,9 @@ public class AnnotatedListener implements DisposableBean, InitializingBean {
          return Collections.emptyList();
       }
       return Arrays.asList(spaceChannels.split(","));
+   }
+   private Boolean getCommentsenabled(AbstractPage page) {
+      return (configurationManager.getSpaceCommentsenabled(page.getSpaceKey()).equals("checked")) ? true : false;
    }
 
    private SlackAttachment getAttachment(AbstractPage page, String action, String attachment, String comPath, String commentator) { //attachments are always comments

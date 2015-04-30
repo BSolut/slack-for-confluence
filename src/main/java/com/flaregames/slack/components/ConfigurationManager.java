@@ -59,11 +59,11 @@ public class ConfigurationManager {
       return getBandanaValue(new ConfluenceBandanaContext(spaceKey), ConfigurationOption.CHANNELS);
    }
    //Comment Notification Enabled
-   public void setSpaceComsEnabled(String spaceKey, String commessages) {
-      bandanaManager.setValue(new ConfluenceBandanaContext(spaceKey), ConfigurationOption.COMSENABLED.getBandanaKey(), commessages);
+   public void setSpaceCommentsenabled(String spaceKey, String commentsenabled) {
+      bandanaManager.setValue(new ConfluenceBandanaContext(spaceKey), ConfigurationOption.COMMENTSENABLED.getBandanaKey(), commentsenabled);
    }
-   public String getSpaceComsEnabled(String spaceKey) {
-      return getBandanaValue(new ConfluenceBandanaContext(spaceKey), ConfigurationOption.COMSENABLED);
+   public String getSpaceCommentsenabled(String spaceKey) {
+      return getBandanaValue(new ConfluenceBandanaContext(spaceKey), ConfigurationOption.COMMENTSENABLED);
    }
 
    private String getBandanaValue(BandanaContext bandanaContext, ConfigurationOption configurationOption) {

@@ -58,21 +58,29 @@
     </diV>
 
     <div class="field-group">
-        #if( $!action.commessages=="checked")
-            #set ($mess = 'checked="checked"')
-        #else
-            #set ($mess = '')
+        #set ($check = '')
+        #if( $!action.commentsenabled=="checked")
+            #set ($check = 'checked=checked')
         #end
-        <input type="checkbox" id="commessages" name="commessages" $mess value="$!action.commessages">Enable Comment Notifications<br>
+        <input onClick="setComments();" id="commentscheck" $check type="checkbox">Enable Comment Notifications<br>
+        <input type="hidden" id="commentsenabled" name="commentsenabled">
     </div>
 
     <div class="buttons-container">
         <div class="buttons">
             <input class="button submit" type="submit" value="Save"/>
-            <a class=="cancel" href="">Cancel</a>
+            <a class=="cancel" href="" style="margin-left:1em;">Cancel</a>
         </div>
     </div>
 </form>
+<script type="text/javascript">
+    window.onload = function() {
+       setComments();
+    }
+    function setComments() {
+       document.getElementById('commentsenabled').value = (document.getElementById('commentscheck').checked) ? "checked" : "unchecked";
+    }
+</script>
 </body>
 </html>
 #end

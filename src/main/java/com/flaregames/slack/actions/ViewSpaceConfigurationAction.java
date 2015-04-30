@@ -9,7 +9,7 @@ public final class ViewSpaceConfigurationAction extends AbstractSpaceAdminAction
 
    private final ConfigurationManager configurationManager;
    private String                     channels;
-   private String                     commessages;
+   private String                     commentsenabled;
    private boolean                    successFullUpdate;
 
    public ViewSpaceConfigurationAction(ConfigurationManager configurationManager) {
@@ -25,7 +25,7 @@ public final class ViewSpaceConfigurationAction extends AbstractSpaceAdminAction
    @Override
    public String execute() {
       setChannels(configurationManager.getSpaceChannels(key));
-      setComsEnabled(configurationManager.getSpaceComsEnabled(key));
+      setCommentsenabled(configurationManager.getSpaceCommentsenabled(key));
       return Action.SUCCESS;
    }
 
@@ -36,11 +36,11 @@ public final class ViewSpaceConfigurationAction extends AbstractSpaceAdminAction
       return channels;
    }
 
-   public void setComsEnabled(String commessages) {
-      this.commessages = commessages;
+   public void setCommentsenabled(String commessages) {
+      this.commentsenabled = commessages;
    }
-   public String getComsEnabled() {
-      return commessages;
+   public String getCommentsenabled() {
+      return commentsenabled;
    }
 
    public boolean isSuccessFullUpdate() {
