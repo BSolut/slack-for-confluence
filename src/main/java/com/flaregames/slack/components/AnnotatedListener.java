@@ -88,6 +88,8 @@ public class AnnotatedListener implements DisposableBean, InitializingBean {
       while(firstcom.getParent() != null) { //get first in line
           firstcom = firstcom.getParent(); }
       List<String> descendants = new ArrayList<String>(firstcom.getDescendantAuthors());
+      if(!descendants.isEmpty()) { //Don't forget author of the parent comment
+        descendants.add(firstcom.getCreator().getName().toLowerCase()); }
 
       //Check if match with Slack User
       String[] mapLines = maps.split(System.getProperty("line.separator"));
